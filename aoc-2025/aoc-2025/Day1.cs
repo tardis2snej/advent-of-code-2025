@@ -4,30 +4,25 @@ public class Day1
 {
 	public void Run(string input)
 	{
-		Console.WriteLine("Day 1");
 		string text = File.ReadAllText(input);
-		Calculate(text.Split('\n'));
+		int result = Calculate(text.Split('\n'));
+		Console.WriteLine($"Password: {result}");
 	}
 
-	private void Calculate(string[] lines)
+	private int Calculate(string[] lines)
 	{
 		int counterExtended = 0;
 		int currentNum = 50;
 		
 		for (int i = 0; i < lines.Length; i++)
 		{
-			int dir = lines[i][0] == 'L' ? -1 : 1;
-			int num = int.Parse(lines[i].Substring(1));
-			
-			Console.WriteLine($"{currentNum} + {num * dir} = {currentNum + num * dir}");
-
 			int oldNum = currentNum;
 			
-			int circles = Math.Abs(num / 100);
+			int rotationAmount = ParseLine(lines[i]);
+			rotationAmount = NormaliseRotationAmount(rotationAmount, out int circles);
 			counterExtended += circles;
-			num %= 100; // cut off circles
 			
-			currentNum += num * dir;
+			currentNum += rotationAmount;
 			
 			if (currentNum == 0)
 			{
@@ -39,8 +34,7 @@ public class Day1
 				counterExtended++;
 				currentNum -= 100;
 			}
-
-			if (currentNum < 0)
+			else if (currentNum < 0)
 			{
 				if (oldNum != 0)
 				{
@@ -48,10 +42,31 @@ public class Day1
 				}
 				currentNum += 100;
 			}
-			
-			Console.WriteLine($"normalised: {currentNum}, counter {counterExtended}");
 		}
 
-		Console.WriteLine(counterExtended);
+		return counterExtended;
+	}
+
+	private int ParseLine(string line)
+	{
+		int dir = line[0] == 'L' ? -1 : 1;
+
+		if (int.TryParse(line.Substring(1), out int num))
+		{
+			return num * dir;
+		}
+		else
+		{
+			Console.WriteLine("ERROR: failed to parse input");
+			return 0;
+		}
+	}
+
+	private int NormaliseRotationAmount(int initialRotation, out int circles)
+	{
+		circles = Math.Abs(initialRotation / 100);
+		initialRotation %= 100;
+
+		return initialRotation;
 	}
 }

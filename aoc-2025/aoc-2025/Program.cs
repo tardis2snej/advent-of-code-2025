@@ -2,5 +2,7 @@
 
 using aoc_2025;
 
+Console.WriteLine("---DAY 1---");
 Day1 day1 = new Day1();
 day1.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day1\\input.txt");
+Console.WriteLine("-----------");
