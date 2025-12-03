@@ -1,0 +1,91 @@
+﻿namespace aoc_2025;
+
+public class Day2
+{
+	private struct Range
+	{
+		public long Start;
+		public long End;
+	}
+	
+	public void Run(string input)
+	{
+		string text = File.ReadAllText(input);
+		string[] rangesTexts = text.Split(",");
+		
+		long sum = 0;
+
+		for (long i = 0; i < rangesTexts.Length; i++)
+		{
+			Range range = ParseRange(rangesTexts[i]);
+			List<long> sequences = FindSequences_Part1(range);
+
+			foreach (long sequence in sequences)
+			{
+				sum += sequence;
+			}
+		}
+		
+		Console.WriteLine($"Sum is {sum}");
+	}
+
+	private Range ParseRange(string input)
+	{
+		string[] rangeEnds = input.Split("-");
+		Range range = new Range();
+		try
+		{
+			range.Start = long.Parse(rangeEnds[0]);
+			range.End = long.Parse(rangeEnds[1]);
+		}
+		catch
+		{
+			Console.WriteLine("Error - failed to parse input");
+		}
+		return range;
+	}
+
+	private List<long> FindSequences_Part1(Range range)
+	{
+		Console.WriteLine($"Checking {range.Start}-{range.End}");
+		List<long> sequences = new List<long>();
+		
+		long pointer = range.Start;
+
+		while (pointer <= range.End)
+		{
+			int digits = GetDigitCount(pointer);
+			if (digits % 2 != 0)
+			{
+				digits++;
+				pointer = GetSmallest(digits);
+
+				if (pointer > range.End)
+				{
+					break;
+				}
+			}
+			
+			string half = pointer.ToString().Substring(0, digits / 2);
+			long possibleSeq = long.Parse(half + half);
+
+			if (possibleSeq >= range.Start && possibleSeq <= range.End)
+			{
+				sequences.Add(possibleSeq);
+			}
+
+			string halfPtr = (long.Parse(half) + 1).ToString();
+			pointer = long.Parse(halfPtr + halfPtr);
+		}
+
+		foreach (var sequence in sequences)
+		{
+			Console.WriteLine(sequence);
+		}
+		return sequences;
+	}
+
+	private long GetSmallest(int digitCount) => (long) Math.Pow(10, digitCount - 1);
+
+	private int GetDigitCount(long value) => value.ToString().Length;
+}
