@@ -8,56 +8,63 @@ public class Day4
 	{
 		string text = File.ReadAllText(input);
 
-		bool[][] rolls = ParseText(text);
-		
-		int count = GetAvailableRolls(rolls);
+		int[][] map = ParseText(text);
 
+		int removedCount = 0;
+		List<(int, int)> rollsToRemove = GetAvailableRolls(map);
+			
+		while (rollsToRemove.Count > 0)
+		{
+			removedCount += rollsToRemove.Count;
+			RemoveAvailableRolls(ref map, rollsToRemove);
+			rollsToRemove = GetAvailableRolls(map);
+		}
 		
-		Console.WriteLine($"Count: {count}");
+		Console.WriteLine($"Count: {removedCount}");
 	}
 
-	private bool[][] ParseText(string text)
+	private int[][] ParseText(string text)
 	{
 		string[] lines = Regex.Split(text, "\r\n|\r|\n");
-		bool[][] rolls =  new bool[lines.Length][];
+		int[][] rolls =  new int[lines.Length][];
 		
 		for (int i = 0; i < lines.Length; i++)
 		{
-			rolls[i] = new bool[lines[i].Length];
+			rolls[i] = new int[lines[i].Length];
 			for (int j = 0; j < lines[i].Length; j++)
 			{
-				rolls[i][j] = lines[i][j] == '@';
+				rolls[i][j] = lines[i][j] == '@' ? 1 : 0;
 			}
 		}
 
 		return rolls;
 	}
 
-	private int GetAvailableRolls(bool[][] map)
+	private List<(int,int)> GetAvailableRolls(int[][] map)
 	{
-		int count = 0;
+		List<(int i, int j)> indexes = new();
 		int lines =  map.Length;
 
 		for (int i = 0; i < lines; i++)
 		{
 			for (int j = 0; j < map[i].Length; j++)
 			{
-				if (!map[i][j])
+				if (map[i][j] == 0)
 					continue;
 
-				int rollsAround = CountRollsInArea(map, i, j);
+				int rollsAround = CountRollsInArea(ref map, i, j);
 
 				if (rollsAround < 5)
 				{
-					count++;
+					indexes.Add((i,j));
 				}
 			}
 		}
 
-		return count;
+		return indexes;
 	}
 
-	private int CountRollsInArea(bool[][] rolls, int i, int j)
+	private int CountRollsInArea(ref int[][] rolls, int i, int j)
 	{
 		int rollsAround = 0; 
 		
@@ -72,25 +79,35 @@ public class Day4
 		{
 			rollsAround += CountRollsOnLine(rolls, i + 1, j);
 		}
+		
+		rolls[i][j] = rollsAround;
 
 		return rollsAround;
 	}
 
-	private int CountRollsOnLine(bool[][] rolls, int i, int j)
+	private int CountRollsOnLine(int[][] rolls, int i, int j)
 	{
 		int counter = 0;
 		
-		counter += rolls[i][j] ? 1 : 0;
+		counter += rolls[i][j] != 0 ? 1 : 0;
 		
 		if (j > 0) 
 		{
-			counter += rolls[i][j - 1] ? 1 : 0;
+			counter += rolls[i][j - 1] != 0 ? 1 : 0;
 		}
 		if (j < rolls[i].Length - 1)
 		{
-			counter += rolls[i][j + 1] ? 1 : 0;
+			counter += rolls[i][j + 1] != 0 ? 1 : 0;
 		}
 
 		return counter;
+	}
+
+	private void RemoveAvailableRolls(ref int[][] map, List<(int,int)> indexes)
+	{
+		foreach ((int, int) index in indexes)
+		{
+			map[index.Item1][index.Item2] = 0;
+		}
 	}
 }
