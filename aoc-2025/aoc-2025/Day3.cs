@@ -14,7 +14,7 @@ public class Day3
 		for (long i = 0; i < batteries.Length; i++)
 		{
 			int[] numbers = ParseLine(batteries[i]);
-			sum += FindBiggestCombo(numbers);
+			sum += FindBiggestCombo(numbers, 12);
 		}
 		
 		Console.WriteLine($"Sum is {sum}");
@@ -32,29 +32,34 @@ public class Day3
 		return numbers;
 	}
 
-	private int FindBiggestCombo(int[] numbers)
+	private long FindBiggestCombo(int[] numbers, int numLen = 2)
 	{
-		int biggestFirstPtr = 0;
-
-		for (int i = 0; i < numbers.Length - 1; i++)
+		int[] pointers = new int[numLen];
+		long number = 0;
+		for (int i = 0; i < numLen; i++)
 		{
-			if (numbers[i] > numbers[biggestFirstPtr])
-			{
-				biggestFirstPtr = i;
-			}
-		}
-
-		int biggestSecondPtr = biggestFirstPtr + 1;
-
-		for (int i = biggestSecondPtr; i < numbers.Length; i++)
-		{
-			if (numbers[i] > numbers[biggestSecondPtr])
-			{
-				biggestSecondPtr = i;
-			}
+			int remainingNumLen = numLen - i - 1;
+			int start = i == 0 ? 0 : pointers[i - 1] + 1;
+			int end = numbers.Length - remainingNumLen;
+			pointers[i] = FindBiggestPtr(numbers, start, end);
+			number += numbers[pointers[i]] * (long)Math.Pow(10, remainingNumLen);
 		}
 		
-		Console.WriteLine($"{numbers[biggestFirstPtr] * 10 + numbers[biggestSecondPtr]}");
-		return numbers[biggestFirstPtr] * 10 + numbers[biggestSecondPtr];
+		Console.WriteLine($"{number}");
+		return number;
+	}
+
+	private int FindBiggestPtr(int[] numbers, int start, int end)
+	{
+		int biggestPtr = start;
+		for (int i = biggestPtr; i < end; i++)
+		{
+			if (numbers[i] > numbers[biggestPtr])
+			{
+				biggestPtr = i;
+			}
+		}
+
+		return biggestPtr;
 	}
 }
