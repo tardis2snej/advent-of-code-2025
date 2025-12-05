@@ -17,7 +17,7 @@ using aoc_2025;
 // day3.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day3\\input.txt");
 // Console.WriteLine("-----------");
 
-Console.WriteLine("---DAY 3---");
+Console.WriteLine("---DAY 4---");
 Day4 day4 = new Day4();
 day4.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day4\\input.txt");
 Console.WriteLine("-----------");
