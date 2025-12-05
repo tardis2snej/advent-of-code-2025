@@ -18,7 +18,7 @@ public class Day2
 		for (long i = 0; i < rangesTexts.Length; i++)
 		{
 			Range range = ParseRange(rangesTexts[i]);
-			List<long> sequences = FindSequences_Part1(range);
+			List<long> sequences = FindSequences_Part2(range);
 
 			foreach (long sequence in sequences)
 			{
@@ -85,7 +85,78 @@ public class Day2
 		return sequences;
 	}
 
+	private List<long> FindSequences_Part2(Range range)
+	{
+		Console.WriteLine($"Checking {range.Start}-{range.End}");
+		List<long> sequences = new List<long>();
+		
+		int digitCount = GetDigitCount(range.Start);
+
+		if (digitCount == 1)
+		{
+			digitCount++;
+		}
+		
+		int endDigitCount = GetDigitCount(range.End);
+
+		while (digitCount <= endDigitCount)
+		{
+			List<int> denominators = GetDenominators(digitCount);
+
+			foreach (int denominator in denominators)
+			{
+				long pointer = Math.Max(range.Start, GetSmallest(digitCount));
+				
+				while (pointer <= range.End)
+				{
+					string seq = pointer.ToString().Substring(0, denominator);
+					long possibleNum =  long.Parse(string.Concat(Enumerable.Repeat(seq, digitCount / denominator)));
+
+					if (possibleNum >= range.Start && possibleNum <= range.End && !sequences.Contains(possibleNum))
+					{
+						sequences.Add(possibleNum);
+					}
+					
+					string nextSeq = (long.Parse(seq) + 1).ToString();
+
+					if (nextSeq.Length == seq.Length)
+					{
+						pointer = long.Parse(nextSeq + new string('0', digitCount - nextSeq.Length));
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+
+			digitCount++;
+		}
+
+		foreach (var sequence in sequences)
+		{
+			Console.WriteLine(sequence);
+		}
+		
+		return sequences;
+	}
+
 	private long GetSmallest(int digitCount) => (long) Math.Pow(10, digitCount - 1);
 
 	private int GetDigitCount(long value) => value.ToString().Length;
+
+	private List<int> GetDenominators(int value)
+	{
+		List<int> denominators = [1];
+
+		for (int i = 2; i < value; i++)
+		{
+			if (value % i == 0)
+			{
+				denominators.Add(i);
+			}
+		}
+
+		return denominators;
+	}
 }
