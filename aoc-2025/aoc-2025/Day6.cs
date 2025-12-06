@@ -35,9 +35,50 @@ public class Day6
 	{
 		string text = File.ReadAllText(input);
 		string[] problemsTexts = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-		
 		Problem[] problems = ParseProblems(problemsTexts[^1]);
 
+		problems = Part2(problemsTexts, problems);
+		
+		long sum = 0;
+		foreach (var problem in problems)
+		{
+			sum += problem.EndProduct;
+		}
+		
+		Console.WriteLine($"Sum is: {sum}");
+	}
+
+	private Problem[] Part2(string[] problemsTexts, Problem[] problems)
+	{
+		int digitLines = problemsTexts.Length - 1;
+		int problemPtr = problems.Length - 1;
+
+		for (int i = problemsTexts[0].Length - 1; i >= 0; i--)
+		{
+			string digits = string.Empty;
+
+			for (int j = 0; j < digitLines; j++)
+			{
+				digits += problemsTexts[j][i];
+			}
+
+			digits = digits.Trim();
+			
+			if (long.TryParse(digits, out long result))
+			{
+				problems[problemPtr].AddValue(result);
+			}
+			else
+			{
+				problemPtr--;
+			}
+		}
+
+		return problems;
+	}
+
+	private Problem[] Part1(string[] problemsTexts, Problem[] problems)
+	{
 		for (int i = 0; i < problemsTexts.Length - 1; i++)
 		{
 			long[] numbers = ParseLine(problemsTexts[i]);
@@ -54,13 +95,7 @@ public class Day6
 			}
 		}
 
-		long sum = 0;
-		foreach (var problem in problems)
-		{
-			sum += problem.EndProduct;
-		}
-		
-		Console.WriteLine($"Sum is: {sum}");
+		return problems;
 	}
 
 	private Problem[] ParseProblems(string operators)
