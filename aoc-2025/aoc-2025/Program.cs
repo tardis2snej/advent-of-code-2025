@@ -22,7 +22,12 @@ using aoc_2025;
 // day4.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day4\\input.txt");
 // Console.WriteLine("-----------");
 
-Console.WriteLine("---DAY 5---");
-Day5 day5 = new();
-day5.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day5\\input.txt");
+// Console.WriteLine("---DAY 5---");
+// Day5 day5 = new();
+// day5.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day5\\input.txt");
+// Console.WriteLine("-----------");
+
+Console.WriteLine("---DAY 6---");
+Day6 day6 = new();
+day6.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day6\\input.txt");
 Console.WriteLine("-----------");
