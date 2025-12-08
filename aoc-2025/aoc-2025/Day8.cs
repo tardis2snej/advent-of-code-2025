@@ -42,16 +42,6 @@ public class Day8
 			}
 		}
 
-		public void Merge(Circuit addCircuit)
-		{
-			foreach (Box box in addCircuit.boxes)
-			{
-				AddBoxIfUnique(box);
-			}
-			
-			addCircuit.Destroy();
-		}
-
 		private void Destroy()
 		{
 			AllCircuits.Remove(this);
@@ -60,12 +50,12 @@ public class Day8
 
 	private class Box
 	{
-		public readonly Vector3 coordinates;
+		public readonly Vector3 Coordinates;
 		public Circuit Circuit;
 
 		public Box(Vector3 coordinates)
 		{
-			this.coordinates = coordinates;
+			this.Coordinates = coordinates;
 			Circuit = new Circuit();
 			Circuit.AddBoxIfUnique(this);
 		}
@@ -74,7 +64,7 @@ public class Day8
 	private class BoxPair((Box, Box) pair)
 	{
 		public readonly (Box, Box) Boxes = pair;
-		public readonly float DistanceSqr = Vector3.DistanceSquared(pair.Item1.coordinates, pair.Item2.coordinates);
+		public readonly float DistanceSqr = Vector3.DistanceSquared(pair.Item1.Coordinates, pair.Item2.Coordinates);
 	}
 
 	public void Run(string input)
@@ -85,16 +75,9 @@ public class Day8
 		Box[] boxes = CreateBoxes(coordinatesList);
 
 		BoxPair[] allPairs = CreatePairs(boxes);
-		
-		Circuit[] circuits = CreateCircuits(allPairs, 1000);
 
-		int mul = 1;
-		for (int i = 0; i < 3 && i < circuits.Length; i++)
-		{
-			mul *= circuits[i].Count;
-		}
-		
-		Console.WriteLine(mul);
+		BoxPair lastPair = CircuitAll(allPairs);
+		Console.WriteLine((long)lastPair.Boxes.Item1.Coordinates.X * (long)lastPair.Boxes.Item2.Coordinates.X);
 	}
 
 	private Vector3[] ParseCoordinates(string[] input)
@@ -153,5 +136,17 @@ public class Day8
 		}
 		
 		return Circuit.AllCircuits.OrderBy(item => item.Count).Reverse().ToArray();
+	}
+
+	private BoxPair CircuitAll(BoxPair[] pairs)
+	{
+		BoxPair lastPair = null;
+		for (int i = 0; i < pairs.Length && Circuit.AllCircuits.Count > 1; i++)
+		{
+			lastPair = pairs[i];
+			Circuit.Merge(pairs[i].Boxes.Item1.Circuit, pairs[i].Boxes.Item2.Circuit);
+		}
+
+		return lastPair;
 	}
 }
