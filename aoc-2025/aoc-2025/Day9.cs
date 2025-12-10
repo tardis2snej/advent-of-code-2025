@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace aoc_2025;
 
@@ -21,14 +20,16 @@ public class Day9
 	
 	private class Line
 	{
-		public readonly (Vector2, Vector2) Points;
-		public bool IsVertical;
+		private static List<Line> linesPool = new();
 		
-		public Line((Vector2, Vector2) coordinates)
+		public readonly (Vector2, Vector2) Points;
+		public readonly bool IsVertical;
+		public int IsInArea = -1; // -1 - not counted, 0 - false, 1 - true
+		
+		public static Line Create((Vector2, Vector2) coordinates)
 		{
 			if (coordinates.Item1.X == coordinates.Item2.X) // vertical line
 			{
-				IsVertical = true;
 				if (coordinates.Item1.Y > coordinates.Item2.Y)
 				{
 					coordinates = (coordinates.Item2, coordinates.Item1);
@@ -36,14 +37,32 @@ public class Day9
 			}
 			else if (coordinates.Item1.Y == coordinates.Item2.Y) // horizontal line
 			{
-				IsVertical = false;
 				if (coordinates.Item1.X > coordinates.Item2.X)
 				{
 					coordinates = (coordinates.Item2, coordinates.Item1);
 				}
 			}
 
+			Line line;
+
+			int existingLine = linesPool.FindIndex(item => item.Points == coordinates);
+			if (existingLine != -1)
+			{
+				line = linesPool[existingLine];
+			}
+			else
+			{
+				line = new Line(coordinates);
+				linesPool.Add(line);
+			}
+
+			return line;
+		}
+		
+		private Line((Vector2, Vector2) coordinates)
+		{
 			Points = coordinates;
+			IsVertical = coordinates.Item1.X == coordinates.Item2.X;
 		}
 
 		public Vector2[] GetPointsArray()
@@ -89,8 +108,7 @@ public class Day9
 		
 		Console.WriteLine($"The biggest rectangle: {pairs[0].Area}");
 		
-		(Line[] vertical, Line[] horizontal) polygon = ParseLines(coordinates);
-		Line[] allLines = polygon.vertical.Concat(polygon.horizontal).ToArray();
+		Line[] allLines = ParseLines(coordinates);
 		
 		Rectangle rectangle = pairs[0];
 		
@@ -134,10 +152,9 @@ public class Day9
 		return pairs.OrderBy(pair => pair.Area).Reverse().ToArray();
 	}
 	
-	private (Line[] vertical, Line[] horizontal) ParseLines(Vector2[] points)
+	private Line[] ParseLines(Vector2[] points)
 	{
-		List<Line> verticalLines = new List<Line>();
-		List<Line> horizontalLines = new List<Line>();
+		List<Line> lines = new();
 
 		for (int i = 1; i <= points.Length; i++)
 		{
@@ -145,38 +162,17 @@ public class Day9
 			
 			if (i == points.Length)
 			{
-				line =  new ((points[i - 1], points[0]));
+				line =  Line.Create((points[i - 1], points[0]));
 			}
 			else
 			{
-				line = new ((points[i - 1], points[i]));
+				line = Line.Create((points[i - 1], points[i]));
 			}
-
-			if (line.IsVertical)
-			{
-				verticalLines.Add(line);
-			}
-			else
-			{
-				horizontalLines.Add(line);
-			}
+			
+			lines.Add(line);
 		}
-		
-		verticalLines.Sort((first, second) =>
-		{
-			int horComp = first.Points.Item1.X.CompareTo(second.Points.Item1.X);
 
-			return horComp == 0 ? first.Points.Item1.Y.CompareTo(second.Points.Item1.Y) : horComp;
-		});
-		
-		horizontalLines.Sort((first, second) =>
-		{
-			int vertComp = first.Points.Item1.Y.CompareTo(second.Points.Item1.Y);
-
-			return vertComp == 0 ? first.Points.Item1.X.CompareTo(second.Points.Item1.X) : vertComp;
-		});
-
-		return (verticalLines.ToArray(), horizontalLines.ToArray());
+		return lines.ToArray();
 	}
 
 	private bool IsRectangleInArea(Rectangle rectangle, Line[] allLines)
@@ -193,22 +189,32 @@ public class Day9
 
 		Line[] lines =
 		[
-			new ((rectanglePoints[0], rectanglePoints[1])),
-			new ((rectanglePoints[1], rectanglePoints[2])),
-			new ((rectanglePoints[2], rectanglePoints[3])),
-			new ((rectanglePoints[3], rectanglePoints[0]))
+			Line.Create((rectanglePoints[0], rectanglePoints[1])),
+			Line.Create((rectanglePoints[1], rectanglePoints[2])),
+			Line.Create((rectanglePoints[2], rectanglePoints[3])),
+			Line.Create((rectanglePoints[3], rectanglePoints[0]))
 		];
 
 		foreach (Line line in lines)
 		{
-			Vector2[] linePoints = line.GetPointsArray();
-			
-			foreach (Vector2 point in linePoints)
+			if (line.IsInArea == -1)
 			{
-				if (!IsPointInArea(point, allLines))
+				Vector2[] linePoints = line.GetPointsArray();
+			
+				foreach (Vector2 point in linePoints)
 				{
-					return false;
+					if (!IsPointInArea(point, allLines))
+					{
+						line.IsInArea = 0;
+						return false;
+					}
 				}
+
+				line.IsInArea = 1;
+			}
+			else if (line.IsInArea == 0)
+			{
+				return false;
 			}
 		}
 
@@ -219,11 +225,14 @@ public class Day9
 	{
 		long rayLeft = 0, rayRight = 0, rayUp = 0, rayDown = 0;
 
-		foreach (Line line in allLines)
+		if (float.IsInteger(point.X) && float.IsInteger(point.Y))
 		{
-			if (line.HasPoint(point))
+			foreach (Line line in allLines)
 			{
-				return true;
+				if (line.HasPoint(point))
+				{
+					return true;
+				}
 			}
 		}
 
