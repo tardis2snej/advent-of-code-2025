@@ -1,5 +1,4 @@
 ﻿// See https://aka.ms/new-console-template for more information
-
 using aoc_2025;
 
 // Console.WriteLine("---DAY 1---");
@@ -42,7 +41,12 @@ using aoc_2025;
 // day8.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day8\\input.txt");
 // Console.WriteLine("-----------");
 
-Console.WriteLine("---DAY 9---");
-Day9 day9 = new();
-day9.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day9\\input.txt");
+// Console.WriteLine("---DAY 9---");
+// Day9 day9 = new();
+// day9.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day9\\input.txt");
+// Console.WriteLine("-----------");
+
+Console.WriteLine("---DAY 10---");
+Day10 day10 = new();
+day10.Run("D:\\Projects\\advent-of-code-2025\\aoc-2025\\aoc-2025\\inputs\\Day10\\input.txt");
 Console.WriteLine("-----------");
