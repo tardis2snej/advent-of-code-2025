@@ -12,7 +12,7 @@ public class Day10
 #endif
 		
 		private readonly uint _targetPattern;
-		private uint _currentPattern = 0;
+		private readonly uint[] _targetJoltages;
 
 		private uint[] _buttons;
 		
@@ -40,6 +40,8 @@ public class Day10
 				iterator++;
 			}
 			_buttons = buttons.ToArray();
+
+			_targetJoltages = ParseJoltages(parameters[^1]);
 		}
 
 		private uint ParseIndicatorPattern(string text)
@@ -70,7 +72,21 @@ public class Day10
 			return button;
 		}
 
-		public int Hack()
+		private uint[] ParseJoltages(string text)
+		{
+			text = text.Trim('{').Trim('}');
+			string[] joltagesStr = text.Split(',');
+
+			uint[] joltages = new uint[joltagesStr.Length];
+			for (int i = 0; i < joltagesStr.Length; i++)
+			{
+				joltages[i] = uint.Parse(joltagesStr[i]);
+			}
+
+			return joltages;
+		}
+
+		public int Hack(bool isJoltage = false)
 		{
 			List<List<uint>> initialSequences = new();
 			
@@ -78,7 +94,7 @@ public class Day10
 			{
 				List<uint> seq = new();
 				seq.Add(_buttons[i]);
-				if (CheckSequence(seq))
+				if (CheckSequence(seq, isJoltage))
 				{
 					return 1;
 				}
@@ -92,11 +108,12 @@ public class Day10
 			while (!hasAnswer)
 			{
 				depth++;
+				Console.Write($"D = {depth}... ");
 				List<List<uint>> seqForNewDepth = new();
 
 				for (int i = 0; i < sequencesForPrevDepth.Count; i++)
 				{
-					hasAnswer = CheckSequences(sequencesForPrevDepth[i], depth, out var list);
+					hasAnswer = CheckSequences(sequencesForPrevDepth[i], out var list, isJoltage);
 
 					if (hasAnswer)
 					{
@@ -111,7 +128,7 @@ public class Day10
 			return depth;
 		}
 
-		private bool CheckSequences(List<uint> parent, int depth, out List<List<uint>> sequences)
+		private bool CheckSequences(List<uint> parent, out List<List<uint>> sequences, bool isJoltage = false)
 		{
 			List<List<uint>> options = new();
 			
@@ -119,13 +136,13 @@ public class Day10
 
 			for (int i = 0; i < _buttons.Length; i++)
 			{
-				if (_buttons[i] == lastElement)
+				if (!isJoltage && _buttons[i] == lastElement)
 					continue;
 
 				List<uint> newSeq = new List<uint>(parent);
 				newSeq.Add(_buttons[i]);
 
-				if (CheckSequence(newSeq))
+				if (CheckSequence(newSeq, isJoltage))
 				{
 					sequences = null;
 					return true;
@@ -137,8 +154,11 @@ public class Day10
 			sequences = options;
 			return false;
 		}
-		
-		private bool CheckSequence(List<uint> sequence)
+
+		private bool CheckSequence(List<uint> sequence, bool isJoltage) =>
+			isJoltage ? CheckJoltageSequence(sequence) : CheckBootSequence(sequence);
+
+		private bool CheckBootSequence(List<uint> sequence)
 		{
 			uint indicator = 0;
 			
@@ -148,6 +168,25 @@ public class Day10
 			}
 			
 			return indicator == _targetPattern;
+		}
+
+		private bool CheckJoltageSequence(List<uint> sequence)
+		{
+			uint[] currentJoltage = new uint[_targetJoltages.Length];
+			
+			foreach (uint btn in sequence)
+			{
+				for (int i = 0; i < currentJoltage.Length; i++)
+				{
+					uint indexMask = (uint)1 << i;
+					if ((indexMask & btn) == indexMask)
+					{
+						currentJoltage[i]++;
+					}
+				}
+			}
+			
+			return currentJoltage.SequenceEqual(_targetJoltages);
 		}
 	}
 
@@ -162,8 +201,8 @@ public class Day10
 		for (int i = 0; i < lines.Length; i++)
 		{
 			machines[i] = new Machine(lines[i]);
-			int ans = machines[i].Hack();
-			Console.WriteLine($"{i + 1} : {ans}");
+			int ans = machines[i].Hack(true);
+			Console.WriteLine($"\n{i + 1} : {ans}");
 			sum += ans;
 		}
 
