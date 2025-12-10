@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Drawing;
+using System.Numerics;
 
 namespace aoc_2025;
 
@@ -54,15 +55,27 @@ public class Day9
 			{
 				if (IsVertical)
 				{
-					points[i] = Points.Item1 with { Y = Points.Item1.Y + 1 };
+					points[i] = Points.Item1 with { Y = Points.Item1.Y + i };
 				}
 				else
 				{
-					points[i] = Points.Item1 with { X = Points.Item1.X + 1 };
+					points[i] = Points.Item1 with { X = Points.Item1.X + i };
 				}
 			}
 
 			return points;
+		}
+
+		public bool HasPoint(Vector2 point)
+		{
+			if (IsVertical)
+			{
+				return point.X == Points.Item1.X && point.Y >= Points.Item1.Y && point.Y <= Points.Item2.Y;
+			}
+			else
+			{
+				return point.Y == Points.Item1.Y && point.X >= Points.Item1.X && point.X <= Points.Item2.X;
+			}
 		}
 	}
 
@@ -77,11 +90,14 @@ public class Day9
 		Console.WriteLine($"The biggest rectangle: {pairs[0].Area}");
 		
 		(Line[] vertical, Line[] horizontal) polygon = ParseLines(coordinates);
+		Line[] allLines = polygon.vertical.Concat(polygon.horizontal).ToArray();
+		
 		Rectangle rectangle = pairs[0];
 		
 		for (int i = 0; i < pairs.Length; i++)
 		{
-			if (IsRectangleInArea(pairs[i], polygon))
+			Console.WriteLine($"{i}/{pairs.Length}");
+			if (IsRectangleInArea(pairs[i], allLines))
 			{
 				rectangle = pairs[i];
 				break;
@@ -163,13 +179,13 @@ public class Day9
 		return (verticalLines.ToArray(), horizontalLines.ToArray());
 	}
 
-	private bool IsRectangleInArea(Rectangle rectangle, (Line[] vertical, Line[] horizontal) area)
+	private bool IsRectangleInArea(Rectangle rectangle, Line[] allLines)
 	{
 		Vector2[] rectanglePoints = rectangle.GetCornerPoints();
 
 		foreach (Vector2 point in rectanglePoints)
 		{
-			if (!IsPointInArea(point, area))
+			if (!IsPointInArea(point, allLines))
 			{
 				return false;
 			}
@@ -189,7 +205,7 @@ public class Day9
 			
 			foreach (Vector2 point in linePoints)
 			{
-				if (!IsPointInArea(point, area))
+				if (!IsPointInArea(point, allLines))
 				{
 					return false;
 				}
@@ -199,112 +215,67 @@ public class Day9
 		return true;
 	}
 
-	private bool IsPointInArea(Vector2 point, (Line[] vertical, Line[] horizontal) area)
+	private bool IsPointInArea(Vector2 point, Line[] allLines)
 	{
-		// bool hasRight = false, hasLeft = false, hasAbove = false, hasBelow = false;
-
 		long rayLeft = 0, rayRight = 0, rayUp = 0, rayDown = 0;
-		bool pointOnBorder = false;
 
-		// check overlap with vertical lines
-		for (int i = 0; i < area.vertical.Length; i++)
+		foreach (Line line in allLines)
 		{
-			Line line =  area.vertical[i];
-
-			if (point.X == line.Points.Item1.X)
+			if (line.HasPoint(point))
 			{
-				if (line.Points.Item2.Y < point.Y)
-				{
-					rayUp--;
-				}
-				if (line.Points.Item2.Y > point.Y)
-				{
-					rayDown--;
-				}
-			}
-
-			if (!IsWithinRange(point.Y, line.Points.Item1.Y, line.Points.Item2.Y))
-			{
-				continue;
-			}
-			
-			float x = line.Points.Item1.X;
-
-			if (x == point.X)
-			{
-				pointOnBorder = true;
-
 				return true;
 			}
-			
-			// points on the left
-			if (x < point.X)
-			{
-				rayLeft++;
-			}
-			
-			// points on the right
-			if (x > point.X)
-			{
-				rayRight++;
-			}
 		}
-		
-		// check overlap with horizontal lines
-		for (int i = 0; i < area.horizontal.Length; i++)
+
+		foreach (Line line in allLines)
 		{
-			Line line = area.horizontal[i];
-			
-			if (line.Points.Item1.Y == point.Y)
+			if (line.IsVertical)
 			{
-				if (line.Points.Item2.X < point.X)
+				if (IsWithinRange(point.Y, line.Points.Item1.Y, line.Points.Item2.Y))
 				{
-					rayLeft--;
-				}
-				if (line.Points.Item2.X > point.X)
-				{
-					rayRight--;
+					if (point.Y == line.Points.Item1.Y || point.Y == line.Points.Item2.Y) // hits the corner BUT doesn't lie on it (different X)
+					{
+						return IsPointInArea(new(point.X, point.Y - 1), allLines);
+					}
+					
+					float horLoc = line.Points.Item1.X;
+					if (point.X > horLoc)
+					{
+						rayLeft++;
+					}
+
+					if (point.X < horLoc)
+					{
+						rayRight++;
+					}
+					
 				}
 			}
-
-			if (!IsWithinRange(point.X, line.Points.Item1.X, line.Points.Item2.X))
+			else
 			{
-				continue;
-			}
-			
-			float y = line.Points.Item1.Y;
+				if (IsWithinRange(point.X, line.Points.Item1.X, line.Points.Item2.X))
+				{
+					if (point.X == line.Points.Item1.X || point.X == line.Points.Item2.X) // hits the corner BUT doesn't lie on it (different Y)
+					{
+						return IsPointInArea(new(point.X - 1, point.Y), allLines);
+					}
+					
+					float verticalLoc = line.Points.Item1.Y;
 
-			if (y == point.Y)
-			{
-				pointOnBorder = true;
+					if (point.Y > verticalLoc)
+					{
+						rayUp++;
+					}
 
-				return true;
-			}
-
-			// points above
-			if (y < point.Y)
-			{
-				rayUp++;
-			}
-			
-			// points below
-			if (y > point.Y)
-			{
-				rayDown++;
+					if (point.Y < verticalLoc)
+					{
+						rayDown++;
+					}
+				}
 			}
 		}
 
-		if (pointOnBorder)
-		{
-			return true;
-		}
-
-		if (rayLeft % 2 == 0 || rayRight % 2 == 0 || rayUp % 2 == 0 || rayDown % 2 == 0)
-		{
-			return false;
-		}
-		
-		return true;
+		return rayDown % 2 != 0 && rayUp % 2 != 0 && rayLeft % 2 != 0 && rayUp % 2 != 0;
 	}
 
 	private bool IsWithinRange(float number, float min, float max) => number >= min && number <= max;
