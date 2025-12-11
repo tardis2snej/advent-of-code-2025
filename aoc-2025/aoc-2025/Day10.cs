@@ -128,6 +128,55 @@ public class Day10
 			return depth;
 		}
 
+		public int Hack_LowMemory()
+		{
+			int depth = 0, counter = 0;
+			bool hasAnswer = false;
+			int buttonsCount = _buttons.Length;
+			List<int> indexesSeq = new([-1]);
+			
+			while (!hasAnswer)
+			{
+				indexesSeq[^1]++;
+				counter++;
+				
+				if (indexesSeq[^1] == buttonsCount)
+				{
+					for (int j = indexesSeq.Count - 1; j > 0; j--)
+					{
+						if (indexesSeq[j] >= buttonsCount)
+						{
+							indexesSeq[j] = 0;
+							indexesSeq[j - 1]++;
+						}
+					}
+
+					if (indexesSeq[0] == buttonsCount)
+					{
+						indexesSeq[0] = 0;
+						indexesSeq.Insert(0,1);
+					}
+				}
+
+				depth = indexesSeq.Count;
+
+				if (counter % 1000000000 == 0)
+				{
+					Console.WriteLine($"D={depth}; {counter}");
+				}
+					
+				List<uint> seq = GenerateSequenceFromParams(indexesSeq);
+					
+				if (CheckSequence(seq, true))
+				{
+					hasAnswer = true;
+					break;
+				}
+			}
+
+			return depth;
+		}
+
 		private bool CheckSequences(List<uint> parent, out List<List<uint>> sequences, bool isJoltage = false)
 		{
 			List<List<uint>> options = new();
@@ -153,6 +202,31 @@ public class Day10
 
 			sequences = options;
 			return false;
+		}
+		
+		private bool CheckLevel(params List<int> prevLevel)
+		{
+			for (int i = 0; i < _buttons.Length; i++)
+			{
+				List<uint> seq = GenerateSequenceFromParams([..prevLevel, i]);
+
+				if (CheckSequence(seq, true))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private List<uint> GenerateSequenceFromParams(params List<int> indexes)
+		{
+			List<uint> sequence = new();
+			for(int i = 0; i < indexes.Count; i++)
+			{
+				sequence.Add(_buttons[indexes[i]]);
+			}
+			return sequence;
 		}
 
 		private bool CheckSequence(List<uint> sequence, bool isJoltage) =>
@@ -200,8 +274,9 @@ public class Day10
 		int sum = 0;
 		for (int i = 0; i < lines.Length; i++)
 		{
+			Console.WriteLine($"Checking {i+1}/{lines.Length}");
 			machines[i] = new Machine(lines[i]);
-			int ans = machines[i].Hack(true);
+			int ans = machines[i].Hack_LowMemory();
 			Console.WriteLine($"\n{i + 1} : {ans}");
 			sum += ans;
 		}
