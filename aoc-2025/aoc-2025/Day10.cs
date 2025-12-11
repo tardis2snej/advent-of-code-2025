@@ -13,6 +13,8 @@ public class Day10
 		
 		private readonly uint _targetPattern;
 		private readonly uint[] _targetJoltages;
+		private readonly int _joltageCount;
+		private readonly uint[] _currentJoltageCache;
 
 		private uint[] _buttons;
 		
@@ -42,6 +44,8 @@ public class Day10
 			_buttons = buttons.ToArray();
 
 			_targetJoltages = ParseJoltages(parameters[^1]);
+			_joltageCount = _targetJoltages.Length;
+			_currentJoltageCache = new uint[_joltageCount];
 		}
 
 		private uint ParseIndicatorPattern(string text)
@@ -130,51 +134,49 @@ public class Day10
 
 		public int Hack_LowMemory()
 		{
-			int depth = 0, counter = 0;
+			int counter = 0;
 			bool hasAnswer = false;
 			int buttonsCount = _buttons.Length;
-			List<int> indexesSeq = new([-1]);
+			int[] indexesSeq = { -1 };
+			int sequenceCount = 1;
 			
-			while (!hasAnswer)
+			while (true)
 			{
 				indexesSeq[^1]++;
 				counter++;
 				
 				if (indexesSeq[^1] == buttonsCount)
 				{
-					for (int j = indexesSeq.Count - 1; j > 0; j--)
+					for (int i = sequenceCount - 1; i > 0; i--)
 					{
-						if (indexesSeq[j] >= buttonsCount)
+						if (indexesSeq[i] >= buttonsCount)
 						{
-							indexesSeq[j] = 0;
-							indexesSeq[j - 1]++;
+							indexesSeq[i] = 0;
+							indexesSeq[i - 1]++;
 						}
 					}
 
 					if (indexesSeq[0] == buttonsCount)
 					{
 						indexesSeq[0] = 0;
-						indexesSeq.Insert(0,1);
+						indexesSeq = [1, ..indexesSeq];
 					}
 				}
 
-				depth = indexesSeq.Count;
+				sequenceCount = indexesSeq.Length;
 
-				if (counter % 1000000000 == 0)
+				if (counter % 100000000 == 0)
 				{
-					Console.WriteLine($"D={depth}; {counter}");
+					Console.WriteLine($"D={sequenceCount}; {counter}");
 				}
 					
-				List<uint> seq = GenerateSequenceFromParams(indexesSeq);
-					
-				if (CheckSequence(seq, true))
+				if (CheckJoltageSequenceByIndexes(ref indexesSeq))
 				{
-					hasAnswer = true;
 					break;
 				}
 			}
 
-			return depth;
+			return sequenceCount;
 		}
 
 		private bool CheckSequences(List<uint> parent, out List<List<uint>> sequences, bool isJoltage = false)
@@ -203,46 +205,9 @@ public class Day10
 			sequences = options;
 			return false;
 		}
-		
-		private bool CheckLevel(params List<int> prevLevel)
-		{
-			for (int i = 0; i < _buttons.Length; i++)
-			{
-				List<uint> seq = GenerateSequenceFromParams([..prevLevel, i]);
-
-				if (CheckSequence(seq, true))
-				{
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		private List<uint> GenerateSequenceFromParams(params List<int> indexes)
-		{
-			List<uint> sequence = new();
-			for(int i = 0; i < indexes.Count; i++)
-			{
-				sequence.Add(_buttons[indexes[i]]);
-			}
-			return sequence;
-		}
 
 		private bool CheckSequence(List<uint> sequence, bool isJoltage) =>
 			isJoltage ? CheckJoltageSequence(sequence) : CheckBootSequence(sequence);
-
-		private bool CheckBootSequence(List<uint> sequence)
-		{
-			uint indicator = 0;
-			
-			foreach (uint btn in sequence)
-			{
-				indicator ^= btn;
-			}
-			
-			return indicator == _targetPattern;
-		}
 
 		private bool CheckJoltageSequence(List<uint> sequence)
 		{
@@ -261,6 +226,46 @@ public class Day10
 			}
 			
 			return currentJoltage.SequenceEqual(_targetJoltages);
+		}
+		
+		private bool CheckBootSequence(List<uint> sequence)
+		{
+			uint indicator = 0;
+			
+			foreach (uint btn in sequence)
+			{
+				indicator ^= btn;
+			}
+			
+			return indicator == _targetPattern;
+		}
+		
+		private bool CheckJoltageSequenceByIndexes(ref int[] indexes)
+		{
+			Array.Clear(_currentJoltageCache);
+			int indexesLength = indexes.Length;
+			
+			for(int i = 0; i < indexesLength; i++)
+			{
+				for (int j = 0; j < _joltageCount; j++)
+				{
+					uint indexMask = (uint)1 << j;
+					if ((indexMask & _buttons[indexes[i]]) == indexMask)
+					{
+						_currentJoltageCache[j]++;
+					}
+				}
+			}
+
+			for (int i = 0; i < _joltageCount; i++)
+			{
+				if (_currentJoltageCache[i] != _targetJoltages[i])
+				{
+					return false;
+				}
+			}
+			
+			return true;
 		}
 	}
 
