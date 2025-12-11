@@ -137,7 +137,7 @@ public class Day10
 			int counter = 0;
 			bool hasAnswer = false;
 			int buttonsCount = _buttons.Length;
-			int[] indexesSeq = { -1 };
+			int[] indexesSeq = [-1];
 			int sequenceCount = 1;
 			
 			while (true)
@@ -276,15 +276,27 @@ public class Day10
 
 		Machine[] machines = new Machine[lines.Length];
 
-		int sum = 0;
+		long sum = 0;
+		int machinesCount = machines.Length;
 		for (int i = 0; i < lines.Length; i++)
 		{
-			Console.WriteLine($"Checking {i+1}/{lines.Length}");
 			machines[i] = new Machine(lines[i]);
-			int ans = machines[i].Hack_LowMemory();
-			Console.WriteLine($"\n{i + 1} : {ans}");
-			sum += ans;
 		}
+
+		int startedCount = 0;
+		int finishedCount = 0;
+
+		Parallel.For(0, machinesCount, i =>
+			             {
+							Interlocked.Add(ref startedCount, 1);
+							Console.WriteLine($"Starting {i+1} (started:{startedCount}/finished:{finishedCount}/total:{machinesCount})");
+							
+							int ans = machines[i].Hack_LowMemory();
+							
+							Console.WriteLine($"\n{i + 1} : {ans}");
+							Interlocked.Add(ref sum, ans);
+							Interlocked.Add(ref finishedCount, 1);
+			             });
 
 		Console.WriteLine($"Result: {sum}");
 	}
