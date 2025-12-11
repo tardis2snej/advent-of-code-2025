@@ -10,16 +10,18 @@ public class Day10
 		private readonly string _targetPatternDebugStr;
 		private List<string> _buttonsDebugStr = new();
 #endif
-		
+		public readonly int Id;
 		private readonly uint _targetPattern;
 		private readonly uint[] _targetJoltages;
+		private readonly int _lowerBound;
 		private readonly int _joltageCount;
 		private readonly uint[] _currentJoltageCache;
 
-		private uint[] _buttons;
+		private readonly uint[] _buttons;
 		
-		public Machine(string info)
+		public Machine(string info, int id)
 		{
+			Id = id;
 			string[] parameters = info.Split(' ');
 			_targetPattern = ParseIndicatorPattern(parameters[0]);
 			
@@ -46,6 +48,8 @@ public class Day10
 			_targetJoltages = ParseJoltages(parameters[^1]);
 			_joltageCount = _targetJoltages.Length;
 			_currentJoltageCache = new uint[_joltageCount];
+
+			_lowerBound = (int)_targetJoltages.Max();
 		}
 
 		private uint ParseIndicatorPattern(string text)
@@ -134,11 +138,12 @@ public class Day10
 
 		public int Hack_LowMemory()
 		{
-			int counter = 0;
 			bool hasAnswer = false;
 			int buttonsCount = _buttons.Length;
-			int[] indexesSeq = [-1];
-			int sequenceCount = 1;
+			int[] indexesSeq = new int[_lowerBound];
+			indexesSeq[^1] = -1;
+			int sequenceCount = _lowerBound;
+			int counter = _lowerBound;
 			
 			while (true)
 			{
@@ -165,9 +170,9 @@ public class Day10
 
 				sequenceCount = indexesSeq.Length;
 
-				if (counter % 100000000 == 0)
+				if (counter % 1000000 == 0)
 				{
-					Console.WriteLine($"D={sequenceCount}; {counter}");
+					Console.WriteLine($"#{Id}. D={sequenceCount}; {counter/1000000}M");
 				}
 					
 				if (CheckJoltageSequenceByIndexes(ref indexesSeq))
@@ -280,7 +285,7 @@ public class Day10
 		int machinesCount = machines.Length;
 		for (int i = 0; i < lines.Length; i++)
 		{
-			machines[i] = new Machine(lines[i]);
+			machines[i] = new Machine(lines[i], i);
 		}
 
 		int startedCount = 0;
@@ -289,7 +294,7 @@ public class Day10
 		Parallel.For(0, machinesCount, i =>
 			             {
 							Interlocked.Add(ref startedCount, 1);
-							Console.WriteLine($"Starting {i+1} (started:{startedCount}/finished:{finishedCount}/total:{machinesCount})");
+							Console.WriteLine($"Starting {machines[i].Id} (started:{startedCount}/finished:{finishedCount}/total:{machinesCount})");
 							
 							int ans = machines[i].Hack_LowMemory();
 							
