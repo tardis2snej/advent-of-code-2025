@@ -258,6 +258,11 @@ public class Day10
 					if ((indexMask & _buttons[indexes[i]]) == indexMask)
 					{
 						_currentJoltageCache[j]++;
+
+						if (_currentJoltageCache[j] > _targetJoltages[j])
+						{
+							return false;
+						}
 					}
 				}
 			}
