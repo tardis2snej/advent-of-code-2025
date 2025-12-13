@@ -1,11 +1,7 @@
 ﻿#define DEBUG_ENABLED
 
-using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
-using MathNet.Numerics.LinearAlgebra.Double.Solvers;
-using MathNet.Numerics.LinearRegression;
-using MathNet.Numerics.Optimization;
 using Microsoft.Z3;
 
 namespace aoc_2025;
@@ -214,31 +210,6 @@ public class Day10
 			return sequenceCount;
 		}
 		
-		// private class MyFunc : IObjectiveFunction
-		// {
-		// 	public Machine machine;
-		//
-		// 	public IObjectiveFunction CreateNew() => new MyFunc();
-		//
-		// 	public Vector<double> Point { get; }
-		// 	public double Value { get; private set; }
-		// 	public bool IsGradientSupported { get; } = true;
-		// 	public Vector<double> Gradient { get; }
-		// 	public bool IsHessianSupported { get; }
-		// 	public Matrix<double> Hessian { get; }
-		// 	public void EvaluateAt(Vector<double> point)
-		// 	{
-		// 		if (!machine.CheckCombination(point))
-		// 		{
-		// 			Value = double.MaxValue;
-		// 		}
-		//
-		// 		Value = point.Sum();
-		// 	}
-		//
-		// 	public IObjectiveFunction Fork() => throw new NotImplementedException();
-		// }
-
 		public long Hack_PickCombination()
 		{
 			Global.ToggleWarningMessages(true);
@@ -293,10 +264,6 @@ public class Day10
 				optimization.Assert(coefficientsConstraints_Bounds);
 				optimization.Assert(sumConstraints);
 				optimization.MkMinimize(coefficientSums);
-				
-				// Solver solver = ctx.MkSolver();
-				// solver.Assert(coefficientsConstraints_Bounds);
-				// solver.Assert(sumConstraints);
 
 				var result = optimization.Check();
 				Console.WriteLine(result);
@@ -318,89 +285,6 @@ public class Day10
 			}
 
 			return totalCount;
-
-			// double[] coefficients = new double[_buttonsMatrix.ColumnCount];
-			// double[,] coefficientsMat = new double[_buttonsMatrix.ColumnCount, 1];
-			// uint[] upperBounds = GetUpperBounds(_buttonsMatrix, _targetJoltagesSorted);
-			// int coefficientsCount = coefficients.Length;
-
-			// bool hasAnswer = false;
-			// long depth = 1;
-			// while (!hasAnswer)
-			// {
-			// 	uint[] coefficientsCopy = null;
-			//
-			// 	for (int updateCount = 1; updateCount <= coefficientsCount; updateCount++)
-			// 	{
-			// 		for (int i = 0; i <= coefficientsCount - updateCount; i++)
-			// 		{
-			// 			coefficientsCopy = [..coefficients];
-			//
-			// 			for (int j = 0; j < updateCount; j++)
-			// 			{
-			// 				if (coefficientsCopy[i + j] < upperBounds[i + j])
-			// 				{
-			// 					coefficientsCopy[i + j]++;
-			// 				}
-			// 			}
-			//
-			// 			if (CountSum(coefficientsCopy) > _maxJoltageValue && CheckCombination(coefficientsCopy))
-			// 			{
-			// 				hasAnswer = true;
-			// 				break;
-			// 			}
-			// 		}
-			// 		
-			// 		if (hasAnswer)
-			// 		{
-			// 			break;
-			// 		}
-			// 	}
-			// 	
-			// 	coefficients = coefficientsCopy;
-			// }
-			//
-			// long mul = 1;
-			// for (int i = 0; i < coefficientsCount; i++)
-			// {
-			// 	mul *= coefficients[i];
-			// }
-			//
-			// return mul;
-		}
-
-		private double Hack_MathNET()
-		{
-			double[] coefficients = new double[_buttonsMatrix.ColumnCount];
-			int[] upperBounds = GetUpperBounds(_buttonsMatrix, _targetJoltagesSorted);
-			double[] lowerBound = new double[coefficients.Length];
-			
-			var res = FindMinimum.OfFunctionConstrained((Vector<double> coefficients) =>
-			                                            {
-				                                            double errors = 0;
-				                                            for (int i = 0; i < _buttonsMatrix.RowCount; i++)
-				                                            {
-					                                            double rowSum = 0;
-					                                            for (int j = 0; j < _buttonsMatrix.ColumnCount; j++)
-					                                            {
-						                                            rowSum += _buttonsMatrix[i, j] * coefficients[j];
-					                                            }
-
-					                                            errors += (rowSum - _targetJoltagesSorted[i]) * (rowSum - _targetJoltagesSorted[i]);
-				                                            }
-
-				                                            return errors;
-			                                            }, DenseVector.OfArray(lowerBound), DenseVector.OfArray([..upperBounds]), DenseVector.OfArray(coefficients), 
-			                                            maxIterations: int.MaxValue);
-			
-			double sumRes = 0;
-
-			for (int i = 0; i < res.Count; i++)
-			{
-				sumRes += Math.Floor(res[i]);
-			}
-			
-			return (long)sumRes;
 		}
 		
 		private void Sort(ref Matrix<double> matrix, ref uint[] sortValues)
@@ -559,36 +443,6 @@ public class Day10
 
 			return true;
 		}
-		
-		private bool CheckCombination(Vector<double> coefficients)
-		{
-			for (int i = 0; i < _buttonsMatrix.RowCount; i++)
-			{
-				double rowSum = 0;
-				for (int j = 0; j < _buttonsMatrix.ColumnCount; j++)
-				{
-					rowSum += _buttonsMatrix[i, j] * coefficients[j];
-				}
-
-				if (rowSum != _targetJoltagesSorted[i])
-				{
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		private int CountSum(double[] arr)
-		{
-			double sum = 0;
-
-			for (int i = 0; i < arr.Length; i++)
-			{
-				sum += arr[i];
-			}
-			return (int)sum;
-		}
 	}
 
 	public void Run(string input)
@@ -617,19 +471,7 @@ public class Day10
 			Console.WriteLine($"\n{i + 1} : {ans}");
 			sum += ans;
 		}
-
-		// Parallel.For(0, machinesCount, i =>
-		// 	             {
-		// 					Interlocked.Add(ref startedCount, 1);
-		// 					Console.WriteLine($"Starting {machines[i].Id} (started:{startedCount}/finished:{finishedCount}/total:{machinesCount})");
-		// 					
-		// 					int ans = machines[i].Hack_LowMemory_BruteForce();
-		// 					
-		// 					Console.WriteLine($"\n{i + 1} : {ans}");
-		// 					Interlocked.Add(ref sum, ans);
-		// 					Interlocked.Add(ref finishedCount, 1);
-		// 	             });
-
+		
 		Console.WriteLine($"Result: {sum}");
 	}
 }
